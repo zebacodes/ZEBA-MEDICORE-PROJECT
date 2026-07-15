@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediCore — Interactive prototype</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="page-header">
+    <h1>MediCore — interactive prototype</h1>
+    <p class="sub">A clickable preview of the unified healthcare system described in the project blueprint. Switch roles in the sidebar.</p>
+  </header>
+
+  <main class="app">
+    <nav class="sidebar" aria-label="Role switcher">
+      <div class="brand"><i class="ti ti-stethoscope" aria-hidden="true"></i>MediCore</div>
+      <div id="roleNav" role="tablist" aria-label="Roles"></div>
+    </nav>
+    <section id="content" class="content" role="tabpanel" aria-live="polite"></section>
+  </main>
+
+  <footer class="page-footer">MediCore healthcare system blueprint — interactive prototype</footer>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
