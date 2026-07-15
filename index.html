@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediCore — Working prototype</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<style>
+  :root {
+    --navy: #14293D;
+    --teal: #0F6E56;
+    --coral: #D3572A;
+    --bg: #F5F6F3;
+    --card: #FFFFFF;
+    --border: #E4E5E0;
+    --text: #2B2B29;
+    --muted: #6B6F6C;
+    --danger: #B3261E;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .shell { display: flex; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 220px;
+    background: var(--navy);
+    color: #DCE4E1;
+    padding: 1.2rem 0.9rem;
+    flex-shrink: 0;
+  }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 16px; color: #fff; margin-bottom: 1.6rem; padding: 0 4px; }
+  .brand i { font-size: 22px; color: var(--teal); }
+  .navgroup { margin-bottom: 1.2rem; }
+  .navgroup-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #6E8A81; padding: 0 10px; margin-bottom: 6px; }
+  .navbtn {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+    border: none; background: transparent; color: #C6D1CD; padding: 8px 10px;
+    border-radius: 8px; font-size: 13.5px; cursor: pointer; margin-bottom: 2px; font-family: inherit;
+  }
+  .navbtn i { font-size: 17px; width: 18px; }
+  .navbtn:hover { background: rgba(255,255,255,0.06); }
+  .navbtn.active { background: var(--teal); color: #fff; }
+
+  /* Main */
+  .main { flex: 1; padding: 1.6rem 2.2rem; max-width: 1100px; }
+  .view { display: none; }
+  .view.active { display: block; }
+  .view-header { margin-bottom: 1.4rem; }
+  .view-header h1 { font-size: 22px; margin: 0 0 4px; font-weight: 600; color: var(--navy); }
+  .view-header p { margin: 0; color: var(--muted); font-size: 13.5px; }
+
+  /* Cards / layout helpers */
+  .grid { display: grid; gap: 14px; }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; }
+  .metric-label { font-size: 12.5px; color: var(--muted); margin: 0 0 4px; }
+  .metric-value { font-size: 24px; font-weight: 600; margin: 0; color: var(--navy); }
+  .metric-value.coral { color: var(--coral); }
+  .metric-value.teal { color: var(--teal); }
+
+  h2.section-title { font-size: 15px; font-weight: 600; color: var(--navy); margin: 1.6rem 0 0.7rem; }
+  h2.section-title:first-child { margin-top: 0; }
+
+  /* Forms */
+  form.inline-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 1rem; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 11.5px; color: var(--muted); }
+  .field input, .field select {
+    border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px; font-size: 13px;
+    font-family: inherit; min-width: 150px; background: #fff; color: var(--text);
+  }
+  .btn {
+    border: none; background: var(--teal); color: #fff; padding: 8px 16px; border-radius: 6px;
+    font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; height: 34px;
+  }
+  .btn:hover { opacity: 0.92; }
+  .btn.secondary { background: transparent; color: var(--navy); border: 1px solid var(--border); }
+  .btn.small { padding: 4px 10px; height: auto; font-size: 12px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 100px; font-size: 11px; font-weight: 600; }
+  .badge.teal { background: #E1F5EE; color: #085041; }
+  .badge.coral { background: #FAECE7; color: #712B13; }
+  .badge.gray { background: #F1EFE8; color: #444441; }
+  .empty { color: var(--muted); font-size: 13px; padding: 1rem 0; }
+
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; background: var(--navy); color: #fff;
+    padding: 10px 16px; border-radius: 8px; font-size: 13px; box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+    opacity: 0; transform: translateY(8px); transition: all 0.25s ease; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <nav class="sidebar">
+    <div class="brand"><i class="ti ti-stethoscope"></i>MediCore</div>
+
+    <div class="navgroup">
+      <div class="navgroup-label">Overview</div>
+      <button class="navbtn active" data-view="dashboard"><i class="ti ti-layout-dashboard"></i>Dashboard</button>
+    </div>
+
+    <div class="navgroup">
+      <div class="navgroup-label">Care delivery</div>
+      <button class="navbtn" data-view="registration"><i class="ti ti-id"></i>Registration & EHR</button>
+      <button class="navbtn" data-view="scheduling"><i class="ti ti-calendar-cog"></i>Scheduling</button>
+      <button class="navbtn" data-view="pharmacy"><i class="ti ti-pill"></i>Pharmacy</button>
+      <button class="navbtn" data-view="lab"><i class="ti ti-flask"></i>Lab & radiology</button>
+    </div>
+
+    <div class="navgroup">
+      <div class="navgroup-label">Operations</div>
+      <button class="navbtn" data-view="billing"><i class="ti ti-receipt"></i>Billing & RCM</button>
+      <button class="navbtn" data-view="analytics"><i class="ti ti-chart-dots"></i>Analytics</button>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <section class="view active" id="view-dashboard">
+      <div class="view-header">
+        <h1>Dashboard</h1>
+        <p>Live snapshot across every connected module — one source of truth.</p>
+      </div>
+      <div class="grid grid-4" id="dashboardMetrics"></div>
+
+      <h2 class="section-title">Recent activity</h2>
+      <div class="card"><table><tbody id="activityFeed"></tbody></table></div>
+    </section>
+
+    <!-- REGISTRATION -->
+    <section class="view" id="view-registration">
+      <div class="view-header">
+        <h1>Registration & EHR</h1>
+        <p>Register a new patient with a unique MRN, linked across every module.</p>
+      </div>
+
+      <form class="inline-form" id="patientForm">
+        <div class="field"><label>Full name</label><input type="text" id="p-name" placeholder="Jordan Lee" required></div>
+        <div class="field"><label>Date of birth</label><input type="date" id="p-dob" required></div>
+        <div class="field">
+          <label>Sex</label>
+          <select id="p-sex"><option>Female</option><option>Male</option><option>Other</option></select>
+        </div>
+        <button class="btn" type="submit"><i class="ti ti-user-plus"></i> Register patient</button>
+      </form>
+
+      <h2 class="section-title">Patient index</h2>
+      <div class="card">
+        <table>
+          <thead><tr><th>MRN</th><th>Name</th><th>DOB</th><th>Sex</th><th>Registered</th></tr></thead>
+          <tbody id="patientTable"></tbody>
+        </table>
+        <p class="empty" id="patientEmpty">No patients registered yet.</p>
+      </div>
+    </section>
+
+    <!-- SCHEDULING -->
+    <section class="view" id="view-scheduling">
+      <div class="view-header">
+        <h1>Scheduling</h1>
+        <p>Book visits against the same patient index used across the system.</p>
+      </div>
+
+      <form class="inline-form" id="apptForm">
+        <div class="field"><label>Patient</label><select id="a-patient" required></select></div>
+        <div class="field">
+          <label>Provider</label>
+          <select id="a-provider">
+            <option>Dr. Patel — Internal medicine</option>
+            <option>Dr. Nakamura — Cardiology</option>
+            <option>Dr. Alvarez — Pediatrics</option>
+          </select>
+        </div>
+        <div class="field"><label>Date</label><input type="date" id="a-date" required></div>
+        <div class="field"><label>Time</label><input type="time" id="a-time" required></div>
+        <button class="btn" type="submit"><i class="ti ti-calendar-check"></i> Book appointment</button>
+      </form>
+
+      <h2 class="section-title">Upcoming appointments</h2>
+      <div class="card">
+        <table>
+          <thead><tr><th>Patient</th><th>Provider</th><th>Date</th><th>Time</th><th>Status</th></tr></thead>
+          <tbody id="apptTable"></tbody>
+        </table>
+        <p class="empty" id="apptEmpty">No appointments booked yet.</p>
+      </div>
+    </section>
+
+    <!-- PHARMACY -->
+    <section class="view" id="view-pharmacy">
+      <div class="view-header">
+        <h1>Pharmacy & inventory</h1>
+        <p>e-Prescribe against a patient and track stock as orders are dispensed.</p>
+      </div>
+
+      <form class="inline-form" id="rxForm">
+        <div class="field"><label>Patient</label><select id="rx-patient" required></select></div>
+        <div class="field">
+          <label>Medication</label>
+          <select id="rx-drug">
+            <option value="Lisinopril 10mg">Lisinopril 10mg (stock 42)</option>
+            <option value="Metformin 500mg">Metformin 500mg (stock 30)</option>
+            <option value="Amoxicillin 500mg">Amoxicillin 500mg (stock 8)</option>
+            <option value="Atorvastatin 20mg">Atorvastatin 20mg (stock 15)</option>
+          </select>
+        </div>
+        <div class="field"><label>Quantity</label><input type="number" id="rx-qty" value="1" min="1" style="min-width:70px"></div>
+        <button class="btn" type="submit"><i class="ti ti-prescription"></i> e-Prescribe</button>
+      </form>
+
+      <h2 class="section-title">Stock levels</h2>
+      <div class="card"><table>
+        <thead><tr><th>Medication</th><th>On hand</th><th>Status</th></tr></thead>
+        <tbody id="stockTable"></tbody>
+      </table></div>
+
+      <h2 class="section-title">Dispensing log</h2>
+      <div class="card">
+        <table><thead><tr><th>Patient</th><th>Medication</th><th>Qty</th><th>Time</th></tr></thead>
+        <tbody id="rxTable"></tbody></table>
+        <p class="empty" id="rxEmpty">No prescriptions logged yet.</p>
+      </div>
+    </section>
+
+    <!-- LAB -->
+    <section class="view" id="view-lab">
+      <div class="view-header">
+        <h1>Lab & radiology</h1>
+        <p>Order a test and route the result back to the clinician.</p>
+      </div>
+
+      <form class="inline-form" id="labForm">
+        <div class="field"><label>Patient</label><select id="l-patient" required></select></div>
+        <div class="field">
+          <label>Test</label>
+          <select id="l-test">
+            <option>Basic metabolic panel</option>
+            <option>Complete blood count</option>
+            <option>Chest X-ray</option>
+            <option>Lipid panel</option>
+          </select>
+        </div>
+        <button class="btn" type="submit"><i class="ti ti-flask"></i> Order test</button>
+      </form>
+
+      <h2 class="section-title">Orders</h2>
+      <div class="card">
+        <table><thead><tr><th>Patient</th><th>Test</th><th>Ordered</th><th>Status</th><th></th></tr></thead>
+        <tbody id="labTable"></tbody></table>
+        <p class="empty" id="labEmpty">No lab orders yet.</p>
+      </div>
+    </section>
+
+    <!-- BILLING -->
+    <section class="view" id="view-billing">
+      <div class="view-header">
+        <h1>Billing & RCM</h1>
+        <p>Capture charges and track claim status per patient.</p>
+      </div>
+
+      <form class="inline-form" id="billForm">
+        <div class="field"><label>Patient</label><select id="b-patient" required></select></div>
+        <div class="field"><label>Description</label><input type="text" id="b-desc" placeholder="Office visit" required></div>
+        <div class="field"><label>Amount ($)</label><input type="number" id="b-amount" placeholder="150" min="0" required style="min-width:100px"></div>
+        <button class="btn" type="submit"><i class="ti ti-receipt"></i> Capture charge</button>
+      </form>
+
+      <h2 class="section-title">Charges</h2>
+      <div class="card">
+        <table><thead><tr><th>Patient</th><th>Description</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+        <tbody id="billTable"></tbody></table>
+        <p class="empty" id="billEmpty">No charges captured yet.</p>
+      </div>
+    </section>
+
+    <!-- ANALYTICS -->
+    <section class="view" id="view-analytics">
+      <div class="view-header">
+        <h1>Analytics & compliance</h1>
+        <p>Computed in real time from registration, scheduling, pharmacy, lab and billing activity.</p>
+      </div>
+      <div class="grid grid-4" id="analyticsMetrics"></div>
+
+      <h2 class="section-title">Module activity</h2>
+      <div class="card">
+        <div id="analyticsBars"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- Shared in-memory state (the "one source of truth") ----------
+const state = {
+  patients: [],
+  appointments: [],
+  stock: {
+    'Lisinopril 10mg': 42,
+    'Metformin 500mg': 30,
+    'Amoxicillin 500mg': 8,
+    'Atorvastatin 20mg': 15
+  },
+  prescriptions: [],
+  labOrders: [],
+  charges: [],
+  activity: [],
+  mrnCounter: 1001
+};
+
+function logActivity(icon, title, detail) {
+  state.activity.unshift({ icon, title, detail, time: new Date() });
+  state.activity = state.activity.slice(0, 8);
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function timeAgo(d) {
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+// ---------- Navigation ----------
+document.querySelectorAll('.navbtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.navbtn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-' + btn.dataset.view).classList.add('active');
+    renderAll();
+  });
+});
+
+// ---------- Helpers to keep patient <select> lists in sync ----------
+function patientOptionsHtml() {
+  if (state.patients.length === 0) return '<option value="">No patients registered</option>';
+  return state.patients.map(p => `<option value="${p.mrn}">${p.name} (${p.mrn})</option>`).join('');
+}
+
+function refreshPatientSelects() {
+  ['a-patient', 'rx-patient', 'l-patient', 'b-patient'].forEach(id => {
+    const el = document.getElementById(id);
+    const current = el.value;
+    el.innerHTML = patientOptionsHtml();
+    if ([...el.options].some(o => o.value === current)) el.value = current;
+  });
+}
+
+function patientName(mrn) {
+  const p = state.patients.find(p => p.mrn === mrn);
+  return p ? p.name : 'Unknown';
+}
+
+// ---------- Registration ----------
+document.getElementById('patientForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = document.getElementById('p-name').value.trim();
+  const dob = document.getElementById('p-dob').value;
+  const sex = document.getElementById('p-sex').value;
+  if (!name || !dob) return;
+
+  const mrn = 'MRN-' + state.mrnCounter++;
+  state.patients.push({ mrn, name, dob, sex, registered: new Date() });
+  logActivity('ti-user-plus', 'Patient registered', `${name} — ${mrn}`);
+  toast(`${name} registered as ${mrn}`);
+  e.target.reset();
+  renderAll();
+});
+
+// ---------- Scheduling ----------
+document.getElementById('apptForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const mrn = document.getElementById('a-patient').value;
+  if (!mrn) { toast('Register a patient first'); return; }
+  const provider = document.getElementById('a-provider').value;
+  const date = document.getElementById('a-date').value;
+  const time = document.getElementById('a-time').value;
+  if (!date || !time) return;
+
+  state.appointments.push({ mrn, provider, date, time, status: 'Confirmed' });
+  logActivity('ti-calendar-check', 'Appointment booked', `${patientName(mrn)} with ${provider.split(' — ')[0]}`);
+  toast('Appointment booked');
+  e.target.reset();
+  renderAll();
+});
+
+// ---------- Pharmacy ----------
+document.getElementById('rxForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const mrn = document.getElementById('rx-patient').value;
+  if (!mrn) { toast('Register a patient first'); return; }
+  const drug = document.getElementById('rx-drug').value;
+  const qty = parseInt(document.getElementById('rx-qty').value, 10) || 1;
+
+  if ((state.stock[drug] ?? 0) < qty) {
+    toast(`Not enough ${drug} in stock`);
+    return;
+  }
+  state.stock[drug] -= qty;
+  state.prescriptions.push({ mrn, drug, qty, time: new Date() });
+  logActivity('ti-prescription', 'Prescription dispensed', `${drug} x${qty} — ${patientName(mrn)}`);
+  toast('Prescription dispensed');
+  e.target.reset();
+  document.getElementById('rx-qty').value = 1;
+  renderAll();
+});
+
+// ---------- Lab ----------
+document.getElementById('labForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const mrn = document.getElementById('l-patient').value;
+  if (!mrn) { toast('Register a patient first'); return; }
+  const test = document.getElementById('l-test').value;
+
+  state.labOrders.push({ mrn, test, ordered: new Date(), status: 'Ordered' });
+  logActivity('ti-flask', 'Lab order placed', `${test} — ${patientName(mrn)}`);
+  toast('Lab order placed');
+  renderAll();
+});
+
+function resultLab(idx) {
+  state.labOrders[idx].status = 'Resulted';
+  logActivity('ti-circle-check', 'Result posted', `${state.labOrders[idx].test} — ${patientName(state.labOrders[idx].mrn)}`);
+  toast('Result posted to chart');
+  renderAll();
+}
+
+// ---------- Billing ----------
+document.getElementById('billForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const mrn = document.getElementById('b-patient').value;
+  if (!mrn) { toast('Register a patient first'); return; }
+  const desc = document.getElementById('b-desc').value.trim();
+  const amount = parseFloat(document.getElementById('b-amount').value) || 0;
+  if (!desc || amount <= 0) return;
+
+  state.charges.push({ mrn, desc, amount, status: 'Pending' });
+  logActivity('ti-receipt', 'Charge captured', `$${amount.toFixed(2)} — ${patientName(mrn)}`);
+  toast('Charge captured');
+  e.target.reset();
+  renderAll();
+});
+
+function markPaid(idx) {
+  state.charges[idx].status = 'Paid';
+  logActivity('ti-circle-check', 'Payment received', `${patientName(state.charges[idx].mrn)} — $${state.charges[idx].amount.toFixed(2)}`);
+  toast('Marked as paid');
+  renderAll();
+}
+
+// ---------- Renderers ----------
+function renderDashboard() {
+  const totalRevenue = state.charges.reduce((s, c) => s + c.amount, 0);
+  const pendingLabs = state.labOrders.filter(l => l.status === 'Ordered').length;
+  const el = document.getElementById('dashboardMetrics');
+  el.innerHTML = `
+    <div class="card"><p class="metric-label">Registered patients</p><p class="metric-value">${state.patients.length}</p></div>
+    <div class="card"><p class="metric-label">Appointments booked</p><p class="metric-value teal">${state.appointments.length}</p></div>
+    <div class="card"><p class="metric-label">Pending lab orders</p><p class="metric-value coral">${pendingLabs}</p></div>
+    <div class="card"><p class="metric-label">Charges captured</p><p class="metric-value">$${totalRevenue.toFixed(2)}</p></div>
+  `;
+
+  const feed = document.getElementById('activityFeed');
+  feed.innerHTML = state.activity.length
+    ? state.activity.map(a => `
+        <tr>
+          <td style="width:28px"><i class="ti ${a.icon}" style="color:var(--teal)"></i></td>
+          <td><strong>${a.title}</strong></td>
+          <td style="color:var(--muted)">${a.detail}</td>
+          <td style="color:var(--muted);text-align:right">${timeAgo(a.time)}</td>
+        </tr>`).join('')
+    : `<tr><td class="empty">No activity yet — register a patient to get started.</td></tr>`;
+}
+
+function renderRegistration() {
+  const tbody = document.getElementById('patientTable');
+  document.getElementById('patientEmpty').style.display = state.patients.length ? 'none' : 'block';
+  tbody.innerHTML = state.patients.map(p => `
+    <tr>
+      <td>${p.mrn}</td><td>${p.name}</td><td>${p.dob}</td><td>${p.sex}</td>
+      <td style="color:var(--muted)">${timeAgo(p.registered)}</td>
+    </tr>`).join('');
+}
+
+function renderScheduling() {
+  const tbody = document.getElementById('apptTable');
+  document.getElementById('apptEmpty').style.display = state.appointments.length ? 'none' : 'block';
+  tbody.innerHTML = state.appointments.map(a => `
+    <tr>
+      <td>${patientName(a.mrn)}</td><td>${a.provider}</td><td>${a.date}</td><td>${a.time}</td>
+      <td><span class="badge teal">${a.status}</span></td>
+    </tr>`).join('');
+}
+
+function renderPharmacy() {
+  const stockTbody = document.getElementById('stockTable');
+  stockTbody.innerHTML = Object.entries(state.stock).map(([drug, qty]) => `
+    <tr>
+      <td>${drug}</td><td>${qty}</td>
+      <td>${qty < 10 ? '<span class="badge coral">Reorder soon</span>' : '<span class="badge teal">In stock</span>'}</td>
+    </tr>`).join('');
+
+  const rxTbody = document.getElementById('rxTable');
+  document.getElementById('rxEmpty').style.display = state.prescriptions.length ? 'none' : 'block';
+  rxTbody.innerHTML = state.prescriptions.map(r => `
+    <tr><td>${patientName(r.mrn)}</td><td>${r.drug}</td><td>${r.qty}</td><td style="color:var(--muted)">${timeAgo(r.time)}</td></tr>
+  `).join('');
+}
+
+function renderLab() {
+  const tbody = document.getElementById('labTable');
+  document.getElementById('labEmpty').style.display = state.labOrders.length ? 'none' : 'block';
+  tbody.innerHTML = state.labOrders.map((l, i) => `
+    <tr>
+      <td>${patientName(l.mrn)}</td><td>${l.test}</td><td style="color:var(--muted)">${timeAgo(l.ordered)}</td>
+      <td>${l.status === 'Resulted' ? '<span class="badge teal">Resulted</span>' : '<span class="badge coral">Ordered</span>'}</td>
+      <td>${l.status === 'Ordered' ? `<button class="btn small secondary" onclick="resultLab(${i})">Post result</button>` : ''}</td>
+    </tr>`).join('');
+}
+
+function renderBilling() {
+  const tbody = document.getElementById('billTable');
+  document.getElementById('billEmpty').style.display = state.charges.length ? 'none' : 'block';
+  tbody.innerHTML = state.charges.map((c, i) => `
+    <tr>
+      <td>${patientName(c.mrn)}</td><td>${c.desc}</td><td>$${c.amount.toFixed(2)}</td>
+      <td>${c.status === 'Paid' ? '<span class="badge teal">Paid</span>' : '<span class="badge coral">Pending</span>'}</td>
+      <td>${c.status === 'Pending' ? `<button class="btn small secondary" onclick="markPaid(${i})">Mark paid</button>` : ''}</td>
+    </tr>`).join('');
+}
+
+function renderAnalytics() {
+  const totalRevenue = state.charges.reduce((s, c) => s + c.amount, 0);
+  const paidRevenue = state.charges.filter(c => c.status === 'Paid').reduce((s, c) => s + c.amount, 0);
+  const lowStock = Object.values(state.stock).filter(q => q < 10).length;
+
+  document.getElementById('analyticsMetrics').innerHTML = `
+    <div class="card"><p class="metric-label">Total billed</p><p class="metric-value">$${totalRevenue.toFixed(2)}</p></div>
+    <div class="card"><p class="metric-label">Collected</p><p class="metric-value teal">$${paidRevenue.toFixed(2)}</p></div>
+    <div class="card"><p class="metric-label">Low-stock medications</p><p class="metric-value coral">${lowStock}</p></div>
+    <div class="card"><p class="metric-label">Compliance audit flags</p><p class="metric-value">0</p></div>
+  `;
+
+  const counts = [
+    ['Registrations', state.patients.length, 'var(--navy)'],
+    ['Appointments', state.appointments.length, 'var(--teal)'],
+    ['Prescriptions', state.prescriptions.length, 'var(--coral)'],
+    ['Lab orders', state.labOrders.length, 'var(--navy)'],
+    ['Charges', state.charges.length, 'var(--teal)']
+  ];
+  const max = Math.max(1, ...counts.map(c => c[1]));
+  document.getElementById('analyticsBars').innerHTML = counts.map(([label, val, color]) => `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="width:120px;font-size:12.5px;color:var(--muted)">${label}</div>
+      <div style="flex:1;background:#F1EFE8;border-radius:6px;height:14px;overflow:hidden">
+        <div style="width:${(val/max*100)}%;background:${color};height:100%"></div>
+      </div>
+      <div style="width:24px;text-align:right;font-size:12.5px">${val}</div>
+    </div>`).join('');
+}
+
+function renderAll() {
+  refreshPatientSelects();
+  renderDashboard();
+  renderRegistration();
+  renderScheduling();
+  renderPharmacy();
+  renderLab();
+  renderBilling();
+  renderAnalytics();
+}
+
+// ---------- Seed a little starting data so the prototype isn't empty on load ----------
+(function seed() {
+  const mrn1 = 'MRN-' + state.mrnCounter++;
+  const mrn2 = 'MRN-' + state.mrnCounter++;
+  state.patients.push({ mrn: mrn1, name: 'Maria Chen', dob: '1988-04-12', sex: 'Female', registered: new Date() });
+  state.patients.push({ mrn: mrn2, name: 'James Ortiz', dob: '1975-11-02', sex: 'Male', registered: new Date() });
+  state.appointments.push({ mrn: mrn1, provider: 'Dr. Patel — Internal medicine', date: new Date().toISOString().slice(0,10), time: '10:30', status: 'Confirmed' });
+  state.labOrders.push({ mrn: mrn2, test: 'Complete blood count', ordered: new Date(), status: 'Ordered' });
+  state.charges.push({ mrn: mrn1, desc: 'Office visit', amount: 150, status: 'Pending' });
+  logActivity('ti-user-plus', 'Patient registered', `Maria Chen — ${mrn1}`);
+  logActivity('ti-user-plus', 'Patient registered', `James Ortiz — ${mrn2}`);
+})();
+
+renderAll();
+</script>
+</body>
+</html>
